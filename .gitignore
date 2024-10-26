@@ -1,3 +1,4 @@
 kernel.iso
 .zig-cache/
 zig-out/
+isodir/
