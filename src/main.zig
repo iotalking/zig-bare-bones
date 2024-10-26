@@ -1,3 +1,4 @@
+const std = @import("std");
 const console = @import("./console.zig");
 
 const ALIGN = 1 << 0;
@@ -17,7 +18,7 @@ export var multiboot: MultibootHeader align(4) linksection(".multiboot") = .{
     .checksum = -(MAGIC + FLAGS),
 };
 
-var stack_bytes: [16 * 1024]u8 align(16) linksection(".bss") = undefined;
+var stack_bytes: [160 * 1024]u8 align(16) linksection(".bss") = undefined;
 
 // We specify that this function is "naked" to let the compiler know
 // not to generate a standard function prologue and epilogue, since
@@ -56,8 +57,26 @@ export fn _start() callconv(.Naked) noreturn {
     );
 }
 
-fn kmain() callconv(.C) void {
+fn kmain() !void {
     console.initialize();
-    console.puts("Hello Zig Kernel!");
+    console.printf("Hello Zig Kernel!\r\n\thello:{d}", .{2024});
+    // std.log.debug("hello", .{});
+    const HashMap = std.AutoHashMap(u32, u32);
+    var buffer: [100 * 1024]u8 = undefined;
+    var fixAllocator = std.heap.FixedBufferAllocator.init(&buffer);
+
+    const allocator = fixAllocator.allocator();
+
+    var map = HashMap.init(allocator);
+    defer map.deinit();
+    try map.put(1, 1);
+    const ok = map.remove(1);
+    if (ok) {
+        console.printf("\r\n remove ok", .{});
+    } else {
+        console.printf("\r\n remove failed", .{});
+    }
+    var nameMap: std.StringHashMapUnmanaged([]const u8) = .{};
+    try nameMap.put(allocator, "winger", "wu");
     while (true) {}
 }
